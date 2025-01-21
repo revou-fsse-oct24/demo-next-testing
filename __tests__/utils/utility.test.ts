@@ -5,7 +5,7 @@ describe("Basic Jest Matcher Examples", () => {
   // Calculator Tests
   describe("Calculator Tests", () => {
     test("toBe: adding 2 + 2 should be 4", () => {
-      expect(calculator.add(2, 2)).toBe(4);
+      expect(calculator.add(2, 2)).toBe(4); // happy path
     });
 
     test("toBe: multiplying 3 * 3 should be 9", () => {
@@ -13,7 +13,11 @@ describe("Basic Jest Matcher Examples", () => {
     });
 
     test("toBeUndefined: dividing by zero should be undefined", () => {
-      expect(calculator.divide(5, 0)).toBeUndefined();
+      expect(calculator.divide(5, 0)).toBeUndefined(); // edge case, kita memang berekspektasi nilanya undefined
+    });
+
+    test("toBe: multiply 0 * 0 should be 1", () => {
+      expect(calculator.multiply(0, 0)).not.toBe(1); // error
     });
 
     test("toBeDefined: normal division should be defined", () => {
@@ -31,6 +35,17 @@ describe("Basic Jest Matcher Examples", () => {
       expect(user).toEqual({
         id: expect.any(Number),
         name: "John",
+        createdAt: expect.any(Date),
+      });
+    });
+
+    test("toEqual: created user should match structure", () => {
+      const user = utils.createUser("John");
+
+      // toEqual is used for objects
+      expect(user).not.toEqual({
+        id: expect.any(Number),
+        name: "Andi",
         createdAt: expect.any(Date),
       });
     });
