@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import LoginForm from "../../src/pages/login";
+import { act } from "react-dom/test-utils";
 
 describe("LoginForm", () => {
   // =========================================
@@ -57,21 +58,35 @@ describe("LoginForm", () => {
     test("shows validation errors for empty fields", async () => {
       render(<LoginForm onSubmit={async () => {}} />);
 
-      fireEvent.click(screen.getByTestId("submit-button"));
+      // Submit the form
+      const submitButton = screen.getByTestId("submit-button");
+      fireEvent.click(submitButton);
 
-      expect(await screen.findByTestId("email-error")).toBeInTheDocument();
-      expect(await screen.findByTestId("password-error")).toBeInTheDocument();
+      // Validation should happen immediately after submit
+      expect(screen.getByTestId("email-error")).toBeInTheDocument();
+      expect(screen.getByTestId("email-error")).toHaveTextContent(
+        "Email is required"
+      );
+      expect(screen.getByTestId("password-error")).toBeInTheDocument();
+      expect(screen.getByTestId("password-error")).toHaveTextContent(
+        "Password is required"
+      );
     });
 
     test("shows error for invalid email format", async () => {
       render(<LoginForm onSubmit={async () => {}} />);
 
+      // Enter invalid email
       fireEvent.change(screen.getByTestId("email-input"), {
         target: { value: "invalid-email" },
       });
+
+      // Submit form
       fireEvent.click(screen.getByTestId("submit-button"));
 
-      expect(await screen.findByTestId("email-error")).toHaveTextContent(
+      // Error should appear immediately
+      expect(screen.getByTestId("email-error")).toBeInTheDocument();
+      expect(screen.getByTestId("email-error")).toHaveTextContent(
         "Email is invalid"
       );
     });
@@ -79,12 +94,17 @@ describe("LoginForm", () => {
     test("shows error for short password", async () => {
       render(<LoginForm onSubmit={async () => {}} />);
 
+      // Enter short password
       fireEvent.change(screen.getByTestId("password-input"), {
         target: { value: "12345" },
       });
+
+      // Submit form
       fireEvent.click(screen.getByTestId("submit-button"));
 
-      expect(await screen.findByTestId("password-error")).toHaveTextContent(
+      // Error should appear immediately
+      expect(screen.getByTestId("password-error")).toBeInTheDocument();
+      expect(screen.getByTestId("password-error")).toHaveTextContent(
         "Password must be at least 6 characters"
       );
     });
