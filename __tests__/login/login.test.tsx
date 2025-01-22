@@ -1,74 +1,188 @@
-// __tests__/LoginForm.test.tsx
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import LoginForm from "../../src/pages/login";
 
 describe("LoginForm", () => {
-  // Test 1: Component renders correctly
-  test("renders login form with all elements", () => {
-    render(<LoginForm onSubmit={() => {}} />);
+  // =========================================
+  // BASIC TESTS (From Previous Material)
+  // =========================================
 
-    expect(screen.getByLabelText("Email")).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /submit/i })).toBeInTheDocument();
+  describe("Basic Rendering (Previous Tests)", () => {
+    // Test 1: Basic render test from yesterday
+    test("renders login form with all elements", () => {
+      render(<LoginForm onSubmit={async () => {}} />);
+      expect(screen.getByLabelText("Email")).toBeInTheDocument();
+      expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /submit/i })
+      ).toBeInTheDocument();
+    });
+
+    // Test 2: Basic form submission test from yesterday
+    test("handles form submission with user input (using fireEvent)", () => {
+      const mockSubmit = jest.fn().mockResolvedValue(undefined);
+      render(<LoginForm onSubmit={mockSubmit} />);
+
+      fireEvent.change(screen.getByTestId("email-input"), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByTestId("password-input"), {
+        target: { value: "password123" },
+      });
+      fireEvent.click(screen.getByTestId("submit-button"));
+
+      expect(mockSubmit).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123"
+      );
+    });
   });
 
-  // Test 2: Form submission with user input
-  test("handles form submission with user input", () => {
-    // Create a mock function to test form submission
-    const mockSubmit = jest.fn(() => {});
-    render(<LoginForm onSubmit={mockSubmit} />);
+  // =========================================
+  // NEW ENHANCED TESTS
+  // =========================================
 
-    // Get form elements
-    const emailInput = screen.getByTestId("email-input");
-    const passwordInput = screen.getByTestId("password-input");
-    const submitButton = screen.getByTestId("submit-button");
-
-    // Simulate user typing
-    fireEvent.change(emailInput, { target: { value: "test@example.com" } });
-    fireEvent.change(passwordInput, { target: { value: "password123" } });
-
-    // Simulate form submission
-    fireEvent.click(submitButton);
-
-    // Check if onSubmit was called with correct values
-    expect(mockSubmit).toHaveBeenCalledWith("test@example.com", "password123");
+  describe("Enhanced Rendering Tests", () => {
+    test("renders with initial email if provided", () => {
+      render(
+        <LoginForm onSubmit={async () => {}} initialEmail="test@example.com" />
+      );
+      expect(screen.getByTestId("email-input")).toHaveValue("test@example.com");
+    });
   });
 
-  test("handles form submission with user input", async () => {
-    // Create userEvent instance
-    const user = userEvent.setup();
+  describe("Form Validation (New Tests)", () => {
+    test("shows validation errors for empty fields", async () => {
+      render(<LoginForm onSubmit={async () => {}} />);
 
-    // Create a mock function to test form submission
-    const mockSubmit = jest.fn();
-    render(<LoginForm onSubmit={mockSubmit} />);
+      fireEvent.click(screen.getByTestId("submit-button"));
 
-    // Get form elements
-    const emailInput = screen.getByTestId("email-input");
-    const passwordInput = screen.getByTestId("password-input");
-    const submitButton = screen.getByTestId("submit-button");
+      expect(await screen.findByTestId("email-error")).toBeInTheDocument();
+      expect(await screen.findByTestId("password-error")).toBeInTheDocument();
+    });
 
-    // Type into inputs using userEvent
-    await user.type(emailInput, "test@example.com");
-    await user.type(passwordInput, "password123");
+    test("shows error for invalid email format", async () => {
+      render(<LoginForm onSubmit={async () => {}} />);
 
-    // Click submit button using userEvent
-    await user.click(submitButton);
+      fireEvent.change(screen.getByTestId("email-input"), {
+        target: { value: "invalid-email" },
+      });
+      fireEvent.click(screen.getByTestId("submit-button"));
 
-    // Check if onSubmit was called with correct values
-    expect(mockSubmit).toHaveBeenCalledWith("test@example.com", "password123");
+      expect(await screen.findByTestId("email-error")).toHaveTextContent(
+        "Email is invalid"
+      );
+    });
+
+    test("shows error for short password", async () => {
+      render(<LoginForm onSubmit={async () => {}} />);
+
+      fireEvent.change(screen.getByTestId("password-input"), {
+        target: { value: "12345" },
+      });
+      fireEvent.click(screen.getByTestId("submit-button"));
+
+      expect(await screen.findByTestId("password-error")).toHaveTextContent(
+        "Password must be at least 6 characters"
+      );
+    });
   });
 
-  // Test 3: Input validation
-  test("requires email and password fields", () => {
-    render(<LoginForm onSubmit={() => {}} />);
+  describe("Async Behavior (New Tests)", () => {
+    test("shows loading state during submission", async () => {
+      const mockSubmit = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(resolve, 100))
+        );
 
-    const emailInput = screen.getByTestId("email-input");
-    const passwordInput = screen.getByTestId("password-input");
+      render(<LoginForm onSubmit={mockSubmit} />);
 
-    expect(emailInput).toBeRequired();
-    expect(passwordInput).toBeRequired();
+      fireEvent.change(screen.getByTestId("email-input"), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByTestId("password-input"), {
+        target: { value: "password123" },
+      });
+
+      fireEvent.click(screen.getByTestId("submit-button"));
+
+      expect(screen.getByTestId("submit-button")).toHaveTextContent(
+        "Logging in..."
+      );
+      expect(screen.getByTestId("submit-button")).toBeDisabled();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("submit-button")).toHaveTextContent("Submit");
+      });
+    });
+
+    test("handles submission error", async () => {
+      const mockSubmit = jest.fn().mockRejectedValue(new Error("Login failed"));
+
+      render(<LoginForm onSubmit={mockSubmit} />);
+
+      fireEvent.change(screen.getByTestId("email-input"), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByTestId("password-input"), {
+        target: { value: "password123" },
+      });
+
+      fireEvent.click(screen.getByTestId("submit-button"));
+
+      expect(await screen.findByTestId("general-error")).toHaveTextContent(
+        "Login failed. Please try again."
+      );
+    });
+  });
+
+  describe("Modern Interaction Testing (New)", () => {
+    test("handles form submission using userEvent", async () => {
+      const user = userEvent.setup();
+      const mockSubmit = jest.fn().mockResolvedValue(undefined);
+
+      render(<LoginForm onSubmit={mockSubmit} />);
+
+      await user.type(screen.getByTestId("email-input"), "test@example.com");
+      await user.type(screen.getByTestId("password-input"), "password123");
+      await user.click(screen.getByTestId("submit-button"));
+
+      expect(mockSubmit).toHaveBeenCalledWith(
+        "test@example.com",
+        "password123"
+      );
+    });
+  });
+
+  describe("Disabled States (New Tests)", () => {
+    test("disables form inputs during submission", async () => {
+      const mockSubmit = jest
+        .fn()
+        .mockImplementation(
+          () => new Promise((resolve) => setTimeout(resolve, 100))
+        );
+
+      render(<LoginForm onSubmit={mockSubmit} />);
+
+      fireEvent.change(screen.getByTestId("email-input"), {
+        target: { value: "test@example.com" },
+      });
+      fireEvent.change(screen.getByTestId("password-input"), {
+        target: { value: "password123" },
+      });
+
+      fireEvent.click(screen.getByTestId("submit-button"));
+
+      expect(screen.getByTestId("email-input")).toBeDisabled();
+      expect(screen.getByTestId("password-input")).toBeDisabled();
+      expect(screen.getByTestId("submit-button")).toBeDisabled();
+
+      await waitFor(() => {
+        expect(screen.getByTestId("email-input")).not.toBeDisabled();
+      });
+    });
   });
 });
