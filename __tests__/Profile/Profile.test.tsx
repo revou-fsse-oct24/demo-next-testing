@@ -5,10 +5,14 @@ import Profile from "../../src/pages/Profile";
 
 describe("Profile Component", () => {
   // Test 1: Check if heading exists
-  it("renders the profile heading", () => {
+  test("renders the profile heading", () => {
+    // Masukan component yang mau ditesting
     render(<Profile />);
+    // Masukan nilai expectasinya
     const heading = screen.getByText("User Profile");
+    // Memastikan nilai expecteasi dengan matchers
     expect(heading).toBeInTheDocument();
+    // Kalau ada artinya dia lolos
   });
 
   // Test 2: Check specific text content
@@ -22,7 +26,7 @@ describe("Profile Component", () => {
   it("shows all list items", () => {
     render(<Profile />);
     const listItems = screen.getAllByRole("listitem");
-    expect(listItems).toHaveLength(2);
+    expect(listItems).toHaveLength(3);
   });
 
   // Test 4: Check for specific class names

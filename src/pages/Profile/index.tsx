@@ -8,6 +8,7 @@ export default function Profile() {
       <ul>
         <li>Located in New York</li>
         <li>5 years experience</li>
+        <li>5 years experience</li>
       </ul>
     </div>
   );
