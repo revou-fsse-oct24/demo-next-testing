@@ -1,22 +1,23 @@
-import { User } from "../../types/types";
 import { useEffect, useState } from "react";
 
-import Head from "next/head";
-
-export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+const Home = () => {
+  const [user, setUser] = useState<{ name: string; email: string } | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const response = await fetch("/api/user");
-        if (!response.ok) throw new Error("Failed to fetch user");
-        const data: User = await response.json();
+        if (!response.ok) {
+          throw new Error("Failed to fetch user");
+        }
+        const data = await response.json();
         setUser(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+      } catch (err: any) {
+        setError(err.message || "Error occurred");
       } finally {
         setLoading(false);
       }
@@ -25,37 +26,23 @@ export default function Home() {
     fetchUser();
   }, []);
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
   return (
-    <div>
-      <Head>
-        <title>User Profile</title>
-        <meta name="description" content="User Profile Page" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className="p-4">
-        <div className="max-w-md mx-auto mt-10 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold mb-4">User Profile</h1>
-
-          {loading && <div>Loading...</div>}
-
-          {error && <div className="text-red-500">Error: {error}</div>}
-
-          {user && !loading && (
-            <div className="space-y-2">
-              <p>
-                <strong>Name:</strong> {user.name}
-              </p>
-              <p>
-                <strong>Email:</strong> {user.email}
-              </p>
-              <p>
-                <strong>Role:</strong> {user.role}
-              </p>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+    <main className="p-4">
+      <div className="max-w-md mx-auto mt-10 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-4">User Profile</h1>
+        <p>Name: {user?.name}</p>
+        <p>Email: {user?.email}</p>
+      </div>
+    </main>
   );
-}
+};
+
+export default Home;
