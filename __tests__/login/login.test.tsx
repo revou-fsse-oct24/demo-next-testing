@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 import LoginForm from "../../src/pages/login";
-import { act } from "react-dom/test-utils";
 
 describe("LoginForm", () => {
   // =========================================
@@ -115,7 +114,7 @@ describe("LoginForm", () => {
       const mockSubmit = jest
         .fn()
         .mockImplementation(
-          () => new Promise((resolve) => setTimeout(resolve, 100))
+          () => new Promise((resolve) => setTimeout(resolve, 1))
         );
 
       render(<LoginForm onSubmit={mockSubmit} />);
@@ -179,19 +178,21 @@ describe("LoginForm", () => {
 
   describe("Disabled States (New Tests)", () => {
     test("disables form inputs during submission", async () => {
+      // sebelum mulai buat mock dengan tujuan menahan asynchronous sebentar setelah button submit di klik
       const mockSubmit = jest
         .fn()
         .mockImplementation(
           () => new Promise((resolve) => setTimeout(resolve, 100))
         );
-
       render(<LoginForm onSubmit={mockSubmit} />);
 
+      // masukan si event, bisa pake fireevent / userevent
+
       fireEvent.change(screen.getByTestId("email-input"), {
-        target: { value: "test@example.com" },
+        target: { value: "test123@mail.com" },
       });
       fireEvent.change(screen.getByTestId("password-input"), {
-        target: { value: "password123" },
+        target: { value: "nagaterbang123" },
       });
 
       fireEvent.click(screen.getByTestId("submit-button"));
@@ -202,6 +203,8 @@ describe("LoginForm", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("email-input")).not.toBeDisabled();
+        expect(screen.getByTestId("password-input")).not.toBeDisabled();
+        expect(screen.getByTestId("submit-button")).not.toBeDisabled();
       });
     });
   });
